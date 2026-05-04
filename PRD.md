@@ -1,7 +1,7 @@
-# Interstitial Journal — Product Requirements Document
+# ilog — Product Requirements Document
 
-**Version:** 0.1 — Draft
-**Date:** 2026-05-03
+**Version:** 0.2 — Phase 1 Specified
+**Date:** 2026-05-04
 **Author:** Solo developer (sole user)
 **Platform:** SailfishOS (QML + C++/Silica)
 
@@ -50,7 +50,7 @@ One. The developer. No multi-user support, no accessibility auditing, no localiz
 │            SailfishOS Device                  │
 │                                               │
 │  ┌─────────┐    ┌──────────────────────────┐  │
-│  │   App   │───▶│ journal.txt (XDG dir)    │  │
+│  │  ilog   │───▶│ journal.txt (XDG dir)    │  │
 │  │ (QML+   │    │ append-only, plain text  │  │
 │  │  Silica) │    └──────────┬───────────────┘  │
 │  └─────────┘               │                  │
@@ -83,20 +83,15 @@ One. The developer. No multi-user support, no accessibility auditing, no localiz
 
 ### 6.1 Primary Storage — `journal.txt`
 
-Append-only plain text. One entry per block. ISO 8601 timestamps.
+Append-only plain text. One entry per line. ISO 8601 timestamps.
 
 ```
 2026-05-03T11:42:00 finished the standup, feeling okay about the sprint scope
 2026-05-03T12:05:00 energy dropping, should eat something
-2026-05-03T14:30:00 !3 back from lunch, kinda sluggish
+2026-05-03T14:30:00 😴 back from lunch, kinda sluggish
 ```
 
-Optional single-character prefix conventions (developer-defined, not enforced by the app):
-- `!` — energy rating (e.g. `!3`)
-- `@` — location context (e.g. `@home`, `@work`)
-- `#` — task/project tag
-
-These are parsed by downstream scripts, not by the app itself.
+Markers are emoji-based (e.g. ⚡ for energy, 😴 for tired, 😡 for angry). These are plain Unicode characters in the text — no special syntax, no app-enforced format. Parsed by downstream scripts at review time.
 
 ### 6.2 Server-Side Mirror — SQL DB
 
@@ -108,30 +103,67 @@ Hourly rsync of `journal.txt` to home server. A parse script imports new lines i
 | ISO 8601       | TEXT | INT?   | TEXT?    | TEXT?   |
 ```
 
-Structured fields are extracted from prefix conventions at parse time, not at capture time.
+Structured fields are extracted from emoji markers at parse time, not at capture time.
 
 ---
 
 ## 7. Features
 
-### 7.1 Phase 1 — The Writing Instrument
+### 7.1 Phase 1 — The Writing Instrument (SPECIFIED)
 
-| Feature | Description |
-|---|---|
-| Instant-cursor input | App opens to a full-screen, focused text input with keyboard visible. No navigation. |
-| Auto-timestamp | Each entry is timestamped at save time. |
-| Single save gesture | A swipe or tap saves the entry and resets the field immediately. |
-| Chronological history | A separate screen (not the default) showing all entries in reverse chronological order, grouped by day. |
-| Plain-text persistence | Entries written to `~/.local/share/yourapp/journal.txt` (XDG equivalent). |
+#### Layout
+
+- **Single-page app**: writing and history are the same view
+- **Chat-style layout**: input field pinned at bottom, entries scroll above
+- **Portrait only**: locked orientation
+- **No navigation**: no page stack, no separate history screen
+
+#### Input
+
+- **Single-line entries**: one line per entry, no multi-line support
+- **Auto-focus on launch**: text input has focus immediately, keyboard appears
+- **Dismissable keyboard**: swipe down to dismiss, tap input to bring back
+- **Placeholder prompt**: dimmed text, randomly selected from a pool of 5-6 variations (e.g. "what are you doing right now?", "what's happening?", "what just happened?")
+- **Tap-to-save**: tap a save button/area to save the entry
+
+#### Save Behavior
+
+- **Clear + flash**: input clears immediately, new entry appears in the list with a brief background highlight (1-2 second fade)
+- **Timestamp at save time**: ISO 8601 timestamp generated when the user taps save
+- **Keyboard stays up**: ready for the next entry immediately
+
+#### Entry Display
+
+- **Monospace font**: PragmataPro preferred, system monospace as fallback
+- **Time-only per entry**: `14:30 back from lunch`
+- **Day dividers**: `──── YYYY-MM-DD ────` between entries from different days
+- **Pure plain text**: no rich text, no special rendering, emojis display as Unicode
+- **Last 100 entries loaded**: lazy-load more on scroll
+
+#### Cover
+
+- **Cover action**: single `CoverAction` that opens the app directly into writing mode
+- **Cover content**: minimal (app name/icon), content TBD after real-world use
+
+#### Storage
+
+- **Location**: `QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)`
+- **Path**: `/home/nemo/.local/share/org.duke/ilog/journal.txt`
+- **Format**: ISO 8601 timestamp + space + text, one entry per line
+- **Append-only**: entries are never modified or deleted
+
+#### Localization
+
+- **None**: English only, translation files removed
 
 ### 7.2 Phase 2 — Access & Export
 
 | Feature | Description |
 |---|---|
-| Cover action | SailfishOS multitasking cover exposes a `CoverAction` that opens the app directly into writing mode. |
 | Text export | "Dump everything to a text file" — full journal to a single file, trivially copyable via `scp`. |
 | Search | Full-text search over journal entries. |
-| Optional quick-tap markers | Tappable icons (e.g. ⚡😐😴) that auto-prepend an energy/mood indicator to the current entry. Optional, not required. |
+| Optional quick-tap markers | Tappable emoji icons (⚡😴😡) that auto-prepend a mood indicator to the current entry. Optional, not required. |
+| Cover content | Show last entry or summary data point on the cover. |
 | Hardware button mapping | Investigate mapping a long-press volume button or power double-tap to launch/focus the app. |
 
 ### 7.3 Phase 3 — Pattern Discovery (Heatmap & Review)
@@ -172,6 +204,7 @@ Structured fields are extracted from prefix conventions at parse time, not at ca
 - Onboarding flow
 - Customisable themes (pick one, ship it)
 - Public distribution (dump as-is if ever open-sourced)
+- Localization (English only)
 
 ---
 
@@ -188,15 +221,43 @@ Structured fields are extracted from prefix conventions at parse time, not at ca
 | LLM | Local model on home server (weekly cron job) |
 | Notification delivery | D-Bus via `dbus-send` over SSH, or `Nemo.Notifications` QML type |
 
+### 9.1 SailfishOS Technical Notes
+
+From documentation research:
+
+- **Silica components**: `ApplicationWindow`, `Page`, `SilicaFlickable`, `TextField`, `Label`, `CoverBackground`, `CoverActionList`, `CoverAction`
+- **App architecture**: `SailfishApp::main()` in C++ entry point loads `qml/ilog.qml` which defines `ApplicationWindow` with `initialPage` and `cover`
+- **XDG paths**: `QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)` resolves to `/home/nemo/.local/share/<OrganizationName>/<ApplicationName>/`
+- **Sailjail**: app runs in sandbox, no special permissions needed for own data directory
+- **Cover actions**: defined in `CoverBackground` > `CoverActionList` > `CoverAction` (max 2 actions)
+- **Keyboard focus**: `TextField` within `Page` auto-scrolls to stay visible when keyboard appears; use `focus: true` and `Component.onCompleted: forceActiveFocus()` for auto-focus
+- **Nemo.Notifications**: QML import `Nemo.Notifications 1.0` available for Phase 4 push notifications
+- **Allowed QML imports**: `Sailfish.Silica 1.0`, `Nemo.Notifications 1.0`, `Nemo.DBus 2.0`, `QtQuick 2.x`, `QtQml 2.x`
+- **Coding conventions**: follow Qt/QML style, use `Theme` properties for colors/sizes, no semicolons in QML JS
+
 ### Reference Projects
 
 - **[jolla-notes](https://github.com/sailfishos/jolla-notes)** — QML/Silica patterns for text input and storage
 - **[Captain's Log](https://github.com/ichthyosaurus/harbour-captains-log)** — Diary app architecture, SQLite model, export patterns (GPL-3.0)
-- **[Gravity Notes](https://www.gravitynotes.app/)** - THE append/review note taking app
+- **[Gravity Notes](https://www.gravitynotes.app/)** — THE append/review note taking app
 
 ---
 
-## 10. Risks & Mitigations
+## 10. Project Configuration
+
+| Setting | Value |
+|---|---|
+| App name | `ilog` |
+| OrganizationName | `org.duke` |
+| ApplicationName | `ilog` |
+| Sailjail permissions | None |
+| Allowed orientations | Portrait only |
+| Translations | None (English only) |
+| Build target | Emulator first, device when available |
+
+---
+
+## 11. Risks & Mitigations
 
 | Risk | Mitigation |
 |---|---|
@@ -208,7 +269,7 @@ Structured fields are extracted from prefix conventions at parse time, not at ca
 
 ---
 
-## 11. Success Criteria
+## 12. Success Criteria
 
 The app is successful if:
 
@@ -219,9 +280,9 @@ The app is successful if:
 
 ---
 
-## 12. Immediate Next Steps
+## 13. Immediate Next Steps
 
-1. **Build Phase 1.** Full-screen text input, auto-timestamp, append to plain text file, basic history scroll. Ship it this weekend.
+1. **Build Phase 1.** Ship the writing instrument this weekend.
 2. **Use it for two weeks.** Accumulate real data. Note every moment of friction or desire for a missing feature.
 3. **Build the heatmap Python script.** Start with hour-of-day, current week. Run against your own data.
 4. **Set up the hourly rsync to home server.** Begin mirroring data to SQL.
