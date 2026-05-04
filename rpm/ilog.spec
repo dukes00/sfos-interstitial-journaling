@@ -1,6 +1,6 @@
-Name:       sfos-interstitial-journaling
+Name:       ilog
 
-Summary:    Interstitial Journaling
+Summary:    Interstitial Journal
 Version:    0.1
 Release:    1
 License:    LICENSE
@@ -14,7 +14,7 @@ BuildRequires:  pkgconfig(Qt5Quick)
 BuildRequires:  desktop-file-utils
 
 %description
-My interstitial journaling app
+ilog — a frictionless interstitial journal for SailfishOS.
 
 
 %prep

@@ -1,0 +1,4 @@
+LATEST_UNRELEASED
+# Rename this file as ilog-%{version}.changes.run.in and add
+# real changes after each release from LATEST_UNRELEASED to
+# the latest release.

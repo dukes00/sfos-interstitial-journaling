@@ -1,0 +1,9 @@
+# Rename this file as ilog-%{version}.changes.in
+# Update it with actual changes when releasing a new version.
+
+* Sat May 04 2026 Duke <duke@example.com> 0.1
+- Initial release: single-line append-only journal
+- Chat-style UI with input pinned at bottom
+- Monospace log display with day dividers
+- Auto-focus keyboard on launch
+- Cover action to jump to writing mode

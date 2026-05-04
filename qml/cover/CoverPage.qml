@@ -3,20 +3,21 @@ import Sailfish.Silica 1.0
 
 CoverBackground {
     Label {
-        id: label
         anchors.centerIn: parent
-        text: qsTr("My Cover")
+        text: "ilog"
+        color: Theme.highlightColor
+        font.pixelSize: Theme.fontSizeLarge
+        font.family: "monospace"
     }
 
     CoverActionList {
-        id: coverAction
-
         CoverAction {
-            iconSource: "image://theme/icon-cover-next"
-        }
-
-        CoverAction {
-            iconSource: "image://theme/icon-cover-pause"
+            iconSource: "image://theme/icon-cover-new"
+            onTriggered: {
+                // Bring app to front and focus input
+                pageStack.pop(null)
+                activate()
+            }
         }
     }
 }
