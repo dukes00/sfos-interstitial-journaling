@@ -11,10 +11,14 @@ Page {
     }
 
     // Scroll to bottom when entries load or new entry added
+    Timer {
+        id: scrollTimer
+        interval: 50
+        onTriggered: listView.positionViewAtEnd()
+    }
+
     function scrollToBottom() {
-        Qt.callLater(function() {
-            listView.positionViewAtEnd()
-        })
+        scrollTimer.restart()
     }
 
     // Save current input
