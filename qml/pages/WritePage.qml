@@ -86,32 +86,42 @@ Page {
                 // Day divider (shown when isNewDay)
                 Item {
                     width: parent.width
-                    height: isNewDay ? dividerRow.height + Theme.paddingSmall : 0
+                    height: isNewDay ? dividerLabel.height + Theme.paddingLarge : 0
                     visible: isNewDay
 
-                    Row {
-                        id: dividerRow
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: Theme.paddingSmall
+                    // Left line
+                    Rectangle {
+                        anchors {
+                            left: parent.left
+                            right: dividerLabel.left
+                            verticalCenter: dividerLabel.verticalCenter
+                            rightMargin: Theme.paddingSmall
+                        }
+                        height: 1
+                        color: Theme.secondaryColor
+                        opacity: 0.3
+                    }
 
-                        Label {
-                            text: "────"
-                            color: Theme.secondaryColor
-                            font.pixelSize: Theme.fontSizeExtraSmall
-                            font.family: "monospace"
+                    Label {
+                        id: dividerLabel
+                        anchors.centerIn: parent
+                        text: dateDisplay
+                        color: Theme.secondaryColor
+                        font.pixelSize: Theme.fontSizeSmall
+                        font.family: "monospace"
+                    }
+
+                    // Right line
+                    Rectangle {
+                        anchors {
+                            left: dividerLabel.right
+                            right: parent.right
+                            verticalCenter: dividerLabel.verticalCenter
+                            leftMargin: Theme.paddingSmall
                         }
-                        Label {
-                            text: dateDisplay
-                            color: Theme.secondaryColor
-                            font.pixelSize: Theme.fontSizeExtraSmall
-                            font.family: "monospace"
-                        }
-                        Label {
-                            text: "────"
-                            color: Theme.secondaryColor
-                            font.pixelSize: Theme.fontSizeExtraSmall
-                            font.family: "monospace"
-                        }
+                        height: 1
+                        color: Theme.secondaryColor
+                        opacity: 0.3
                     }
                 }
 
